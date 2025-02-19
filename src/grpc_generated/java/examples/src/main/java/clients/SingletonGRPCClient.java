@@ -9,9 +9,13 @@ import java.util.stream.DoubleStream;
 import inference.GRPCInferenceServiceGrpc;
 import inference.GRPCInferenceServiceGrpc.GRPCInferenceServiceBlockingStub;
 import inference.GrpcService.*;
+import io.grpc.*;
+
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import javax.net.ssl.SSLException;
 
 // 单例模式的 gRPC 客户端类
 public class SingletonGRPCClient {
@@ -20,13 +24,17 @@ public class SingletonGRPCClient {
     private final GRPCInferenceServiceBlockingStub grpc_stub;
 
     // 私有构造函数，确保只能通过 getInstance 方法创建实例
-    private SingletonGRPCClient(String host, int port) {
-        this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+    private SingletonGRPCClient(String host, int port) throws SSLException {
+        SslContext sslContext = GrpcSslContexts.forClient().build();
+
+        this.channel = NettyChannelBuilder.forAddress(host, port)
+                .sslContext(sslContext)
+                .build();
         this.grpc_stub = GRPCInferenceServiceGrpc.newBlockingStub(channel);
     }
 
     // 获取单例实例的方法
-    public static synchronized SingletonGRPCClient getInstance(String host, int port) {
+    public static synchronized SingletonGRPCClient getInstance(String host, int port) throws SSLException {
         if (instance == null) {
             instance = new SingletonGRPCClient(host, port);
         }
@@ -109,10 +117,10 @@ public class SingletonGRPCClient {
         channel.shutdownNow();
     }
 
-    public static void main(String[] args) {
-        String host = args.length > 0 ? args[0] : "10.132.121.223";
-//        String host = args.length > 0 ? args[0] : "vas-vedap-model-infer-service-stg.nioint.com";
-        int port = args.length > 1 ? Integer.parseInt(args[1]) : 8004;
+    public static void main(String[] args) throws SSLException {
+//        String host = args.length > 0 ? args[0] : "10.132.121.223";
+        String host = args.length > 0 ? args[0] : "vas-vedap-model-infer-service-stg.nioint.com";
+        int port = args.length > 1 ? Integer.parseInt(args[1]) : 443;
 
         String model_name = "driver";
         String model_version = "";
@@ -132,13 +140,13 @@ public class SingletonGRPCClient {
 
         // 生成随机输入数据（以 Float 为例）
         Random random = new Random();
-//        List<Float> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2368).boxed().map(Float::new).collect(Collectors.toList());
-        List<Double> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2368).boxed().collect(Collectors.toList());
+        List<Float> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2368).boxed().map(Float::new).collect(Collectors.toList());
+//        List<Double> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2368).boxed().collect(Collectors.toList());
         List<Integer> inputShape = Arrays.asList(32, 74);
 
         // 调用推理方法
         Object result = client.infer(model_name, model_version,
-                "INPUT", "FP64", inputShape, inputData, "OUTPUT", "FP64");
+                "INPUT", "FP32", inputShape, inputData, "OUTPUT", "FP32");
 
         if (result instanceof float[]) {
             float[] floatResult = (float[]) result;

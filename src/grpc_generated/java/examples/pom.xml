@@ -22,6 +22,7 @@
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-netty-shaded</artifactId>
 			<version>1.59.1</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
@@ -49,6 +50,47 @@
 			<artifactId>scala-library</artifactId>
 			<version>${scala.complete.version}</version>
 		</dependency>
+
+<!--		<dependency>-->
+<!--			<groupId>org.conscrypt</groupId>-->
+<!--			<artifactId>conscrypt-openjdk-uber</artifactId>-->
+<!--			<version>2.2.0</version>-->
+<!--		</dependency>-->
+
+<!--		<dependency>-->
+<!--			<groupId>io.grpc</groupId>-->
+<!--			<artifactId>grpc-netty</artifactId>-->
+<!--			<version>1.70.0</version>-->
+<!--			<scope>compile</scope>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>io.grpc</groupId>-->
+<!--			<artifactId>grpc-netty-shaded</artifactId>-->
+<!--			<version>1.70.0</version>-->
+<!--			<scope>compile</scope>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>io.grpc</groupId>-->
+<!--			<artifactId>grpc-protobuf</artifactId>-->
+<!--			<version>1.70.0</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>io.grpc</groupId>-->
+<!--			<artifactId>grpc-stub</artifactId>-->
+<!--			<version>1.70.0</version>-->
+<!--		</dependency>-->
+<!--		<dependency> &lt;!&ndash; necessary for Java 9+ &ndash;&gt;-->
+<!--			<groupId>org.apache.tomcat</groupId>-->
+<!--			<artifactId>annotations-api</artifactId>-->
+<!--			<version>6.0.53</version>-->
+<!--			<scope>provided</scope>-->
+<!--		</dependency>-->
+<!--&lt;!&ndash;		<dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;			<groupId>io.netty</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;			<artifactId>netty-handler</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;			<version>4.1.110.Final</version>&ndash;&gt;-->
+<!--&lt;!&ndash;		</dependency>&ndash;&gt;-->
+
 	</dependencies>
 
 	<build>
