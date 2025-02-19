@@ -14,6 +14,7 @@ import inference.GRPCInferenceServiceGrpc.GRPCInferenceServiceBlockingStub;
 import inference.GrpcService.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 // 单例模式的 gRPC 客户端类
 public class SingletonGRPCClient {
@@ -72,7 +73,13 @@ public class SingletonGRPCClient {
 
         request.addOutputs(0, output);
 
-        ModelInferResponse response = grpc_stub.withDeadlineAfter(1, TimeUnit.SECONDS).modelInfer(request.build());
+        ModelInferResponse response = null;
+        try {
+            response = grpc_stub.withDeadlineAfter(5, TimeUnit.SECONDS).modelInfer(request.build());
+        } catch (StatusRuntimeException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
 
         // 根据输出数据类型创建对应类型的数组
         ByteBuffer outputBuffer = response.getRawOutputContentsList().get(0).asReadOnlyByteBuffer().order(ByteOrder.LITTLE_ENDIAN);
@@ -108,13 +115,18 @@ public class SingletonGRPCClient {
         SingletonGRPCClient client = SingletonGRPCClient.getInstance(host, port);
 
         // check server is live
-        ServerLiveRequest serverLiveRequest = ServerLiveRequest.getDefaultInstance();
-        ServerLiveResponse r = client.grpc_stub.serverLive(serverLiveRequest);
-        System.out.println(r);
+        try {
+            ServerLiveRequest serverLiveRequest = ServerLiveRequest.getDefaultInstance();
+            ServerLiveResponse r = client.grpc_stub.serverLive(serverLiveRequest);
+            System.out.println(r);
+        } catch (StatusRuntimeException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
 
         // 生成随机输入数据（以 Float 为例）
         Random random = new Random();
-        List<Float> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2368).boxed().map(Float::new).collect(Collectors.toList());
+        List<Float> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2369).boxed().map(Float::new).collect(Collectors.toList());
         List<Integer> inputShape = Arrays.asList(32, 74);
 
         // 调用推理方法
