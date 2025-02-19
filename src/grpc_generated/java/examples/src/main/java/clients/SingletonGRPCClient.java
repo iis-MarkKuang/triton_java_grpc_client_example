@@ -1,9 +1,6 @@
 package clients;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -55,6 +52,9 @@ public class SingletonGRPCClient {
         } else if (inputData.get(0) instanceof Integer) {
             List<Integer> intData = inputData.stream().map(item -> (Integer) item).collect(Collectors.toList());
             inputDataBuilder.addAllIntContents(intData);
+        } else if (inputData.get(0) instanceof Double) {
+            List<Double> doubleData = inputData.stream().map(item -> (Double) item).collect(Collectors.toList());
+            inputDataBuilder.addAllFp64Contents(doubleData);
         }
         // 可根据需要添加更多数据类型的处理
 
@@ -75,7 +75,7 @@ public class SingletonGRPCClient {
 
         ModelInferResponse response = null;
         try {
-            response = grpc_stub.withDeadlineAfter(5, TimeUnit.SECONDS).modelInfer(request.build());
+            response = grpc_stub.withDeadlineAfter(1, TimeUnit.SECONDS).modelInfer(request.build());
         } catch (StatusRuntimeException e) {
             System.out.println(e.getMessage());
             return null;
@@ -93,6 +93,11 @@ public class SingletonGRPCClient {
             int[] result = new int[intBuffer.remaining()];
             intBuffer.get(result);
             return result;
+        } else if (outputDataType.equals("FP64")) {
+            DoubleBuffer doubleBuffer = outputBuffer.asDoubleBuffer();
+            double[] result = new double[doubleBuffer.remaining()];
+            doubleBuffer.get(result);
+            return result;
         }
         // 可根据需要添加更多数据类型的处理
 
@@ -106,6 +111,7 @@ public class SingletonGRPCClient {
 
     public static void main(String[] args) {
         String host = args.length > 0 ? args[0] : "10.132.121.223";
+//        String host = args.length > 0 ? args[0] : "vas-vedap-model-infer-service-stg.nioint.com";
         int port = args.length > 1 ? Integer.parseInt(args[1]) : 8004;
 
         String model_name = "driver";
@@ -126,18 +132,25 @@ public class SingletonGRPCClient {
 
         // 生成随机输入数据（以 Float 为例）
         Random random = new Random();
-        List<Float> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2369).boxed().map(Float::new).collect(Collectors.toList());
+//        List<Float> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2368).boxed().map(Float::new).collect(Collectors.toList());
+        List<Double> inputData = DoubleStream.generate(() -> random.nextFloat() * 10).limit(2368).boxed().collect(Collectors.toList());
         List<Integer> inputShape = Arrays.asList(32, 74);
 
         // 调用推理方法
         Object result = client.infer(model_name, model_version,
-                "INPUT", "FP32", inputShape, inputData, "OUTPUT", "FP32");
+                "INPUT", "FP64", inputShape, inputData, "OUTPUT", "FP64");
 
         if (result instanceof float[]) {
             float[] floatResult = (float[]) result;
             for (int i = 0; i < floatResult.length; i++) {
                 System.out.println(
                         inputData.get(i) + " = " + floatResult[i]);
+            }
+        } else {
+            double[] doubleResult = (double[]) result;
+            for (int i = 0; i < doubleResult.length; i++) {
+                System.out.println(
+                        inputData.get(i) + " = " + doubleResult[i]);
             }
         }
 
